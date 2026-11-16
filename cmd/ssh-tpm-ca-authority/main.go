@@ -24,9 +24,12 @@ Example:
 
 func run(ctx context.Context, rwc transport.TPMCloser, config *server.Config) error {
 
-	as := server.NewTPMAttestServer(
+	as, err := server.NewTPMAttestServer(
 		rwc, config,
 	)
+	if err != nil {
+		return err
+	}
 
 	srv := &http.Server{
 		Addr:    ":8080",

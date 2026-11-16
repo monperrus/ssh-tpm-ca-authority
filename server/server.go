@@ -31,9 +31,10 @@ type MapState struct {
 }
 
 type TPMAttestServer struct {
-	rwc    transport.TPMCloser
-	config *Config
-	state  *sync.Map
+	rwc     transport.TPMCloser
+	config  *Config
+	state   *sync.Map
+	ekTrust *attest.EKTrust
 }
 
 func (t *TPMAttestServer) Handlers() *http.ServeMux {
@@ -68,6 +69,14 @@ func (t *TPMAttestServer) attestHandler(w http.ResponseWriter, r *http.Request) 
 		fmt.Println("invalid user")
 		fmt.Fprintf(w, "invalid user")
 		return
+	}
+
+	if t.ekTrust != nil {
+		if err := t.ekTrust.VerifyEKCertificate(params.EKCert, params.EK, time.Now()); err != nil {
+			slog.Info("rejected EK certificate", slog.String("user", params.User), slog.String("error", err.Error()))
+			fmt.Fprintf(w, "EK certificate did not validate: %v", err)
+			return
+		}
 	}
 
 	ok, err = params.Verify()
@@ -212,10 +221,18 @@ func (t *TPMAttestServer) submitHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func NewTPMAttestServer(rwc transport.TPMCloser, config *Config) *TPMAttestServer {
-	return &TPMAttestServer{
+func NewTPMAttestServer(rwc transport.TPMCloser, config *Config) (*TPMAttestServer, error) {
+	s := &TPMAttestServer{
 		rwc:    rwc,
 		config: config,
 		state:  new(sync.Map),
 	}
+	if config.EKRoots != "" {
+		trust, err := attest.LoadEKTrust(config.EKRoots, config.EKIntermediates)
+		if err != nil {
+			return nil, err
+		}
+		s.ekTrust = trust
+	}
+	return s, nil
 }

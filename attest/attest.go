@@ -119,6 +119,7 @@ type AttestationParameters struct {
 	Host        string
 	User        string
 	EK          *tpm2.TPMTPublic
+	EKCert      []byte // DER, from the manufacturer; empty if the TPM has none
 	AK          *Attestation
 	TPMBoundKey *Attestation
 }
@@ -128,6 +129,7 @@ func (a *AttestationParameters) MarshalJSON() ([]byte, error) {
 	// "ak_signer":            tpm2.Marshal(a.AK.Signer),
 	return json.Marshal(map[string][]byte{
 		"ek":                         tpm2.Marshal(a.EK),
+		"ek_cert":                    a.EKCert,
 		"host":                       []byte(a.Host),
 		"user":                       []byte(a.User),
 		"ak_public":                  tpm2.Marshal(a.AK.Public),
@@ -153,6 +155,7 @@ func (a *AttestationParameters) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	a.EK = ek
+	a.EKCert = obj["ek_cert"]
 
 	a.Host = string(obj["host"])
 	a.User = string(obj["user"])
@@ -314,8 +317,12 @@ func NewAttestationParameters(rwc transport.TPMCloser, tpmkey *keyfile.TPMKey, r
 	}
 	keyfile.FlushHandle(rwc, ekHandle)
 
+	// Absent on software TPMs; the server decides whether it is required.
+	ekCert, _ := ReadEKCertificate(rwc)
+
 	return &AttestationParameters{
 		EK:     ek,
+		EKCert: ekCert,
 		Handle: akHandle,
 		AK: &Attestation{
 			Public:            akpub,

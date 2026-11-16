@@ -64,7 +64,7 @@ func TestMain(t *testing.T) {
 		t.Fatalf("message")
 	}
 
-	as := server.NewTPMAttestServer(
+	as, err := server.NewTPMAttestServer(
 		rwc,
 		&server.Config{
 			Hosts: []*server.HostConf{
@@ -82,6 +82,9 @@ func TestMain(t *testing.T) {
 			},
 		},
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ts := httptest.NewServer(as.Handlers())
 	defer ts.Close()

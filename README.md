@@ -53,6 +53,24 @@ client$ go run ./cmd/getek
 000ba1d6910d32dbafb47e1365e8a84606aaefc9bb2404f4f99082f6284a9b33415b
 ```
 
+### Require a genuine TPM
+
+By default the EK name in `config.yaml` is the only anchor: any TPM with that EK, including a
+software TPM, gets certificates. With `ek_roots`, the client must also present the EK certificate
+its manufacturer stored in NV (index `0x01c0000a`), and the CA checks that it chains to one of the
+roots and certifies the very EK the credential challenge is encrypted to.
+
+```yaml
+ek_roots: tpm-roots.pem                 # e.g. GlobalSign Trusted Platform Module ECC Root CA
+ek_intermediates: tpm-intermediates.pem # e.g. STM TPM ECC Root CA 01, STM TPM ECC Intermediate CA 01
+hosts:
+  - host: gibson.ellingson.com
+    ...
+```
+
+Manufacturer certificates are collected in Microsoft's
+[TrustedTpm.cab](https://go.microsoft.com/fwlink/?linkid=2097925).
+
 Then run the CA authority.
 
 Note: It will currently only listed to `http://127.0.0.1:8080`.

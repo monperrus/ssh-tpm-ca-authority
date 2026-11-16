@@ -57,6 +57,10 @@ func (h *HostConf) GetUser(user string, ek string) (*UsersConf, bool) {
 
 type Config struct {
 	Hosts []*HostConf `yaml:"hosts"`
+	// PEM bundles of TPM manufacturer roots and intermediates. When EKRoots is set, a client
+	// must present an EK certificate that chains to one of them, for the EK it is challenged on.
+	EKRoots         string `yaml:"ek_roots"`
+	EKIntermediates string `yaml:"ek_intermediates"`
 }
 
 func (h *Config) HasHost(host string) (*HostConf, bool) {
