@@ -14,6 +14,7 @@ import (
 	"hash"
 	"io"
 	"math/big"
+	"os"
 
 	keyfile "github.com/foxboron/go-tpm-keyfiles"
 	"github.com/foxboron/go-tpm-keyfiles/template"
@@ -226,7 +227,7 @@ func (a *AttestationParameters) GetSecret(rwc transport.TPMCloser, ch *Encrypted
 
 func getAK(rwc transport.TPMCloser) (*tpm2.NamedHandle, *tpm2.CreatePrimaryResponse, error) {
 	akRsp, err := tpm2.CreatePrimary{
-		PrimaryHandle: tpm2.TPMRHEndorsement,
+		PrimaryHandle: endorsementAuth(),
 		InPublic:      tpm2.New2B(ECCSAK_H2_Template),
 	}.Execute(rwc)
 	if err != nil {
@@ -372,7 +373,7 @@ func ReadEKCert(rwc transport.TPMCloser) (*tpm2.NamedHandle, *tpm2.TPMTPublic, e
 	// }
 
 	createRsp, err := tpm2.CreatePrimary{
-		PrimaryHandle: tpm2.TPMRHEndorsement,
+		PrimaryHandle: endorsementAuth(),
 		InPublic:      tpm2.New2B(tpm2.ECCEKTemplate),
 	}.Execute(rwc)
 	if err != nil {
@@ -390,7 +391,7 @@ func ReadEKCert(rwc transport.TPMCloser) (*tpm2.NamedHandle, *tpm2.TPMTPublic, e
 
 func EkPolicy(t transport.TPM, handle tpm2.TPMISHPolicy, nonceTPM tpm2.TPM2BNonce) error {
 	cmd := tpm2.PolicySecret{
-		AuthHandle:    tpm2.TPMRHEndorsement,
+		AuthHandle:    endorsementAuth(),
 		PolicySession: handle,
 		NonceTPM:      nonceTPM,
 	}
@@ -718,5 +719,14 @@ func VerifySignature(pub *tpm2.TPMTPublic, b []byte, sig *tpm2.TPMTSignature) (b
 	default:
 		// TODO: Implement RSA
 		return false, fmt.Errorf("not supported")
+	}
+}
+
+// endorsementAuth is the endorsement hierarchy, authorized with the password in TPM_EH_AUTH
+// (empty when unset, the factory default).
+func endorsementAuth() tpm2.AuthHandle {
+	return tpm2.AuthHandle{
+		Handle: tpm2.TPMRHEndorsement,
+		Auth:   tpm2.PasswordAuth([]byte(os.Getenv("TPM_EH_AUTH"))),
 	}
 }

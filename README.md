@@ -71,6 +71,9 @@ hosts:
 Manufacturer certificates are collected in Microsoft's
 [TrustedTpm.cab](https://go.microsoft.com/fwlink/?linkid=2097925).
 
+If the endorsement hierarchy has a password (`tpm2_changeauth -c endorsement`), set it in
+`TPM_EH_AUTH` for the CA and the client; otherwise every run fails with `TPM_RC_BAD_AUTH`.
+
 Then run the CA authority.
 
 Note: It will currently only listed to `http://127.0.0.1:8080`.
