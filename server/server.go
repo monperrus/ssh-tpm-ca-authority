@@ -135,10 +135,14 @@ func (t *TPMAttestServer) submitHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	ok, err = oidc.VerifyUserAndJWT(userconf.OIDCConnector, userconf.Email, string(state.Nonce), cr.Jwt)
-	if err != nil {
-		log.Fatal(err)
-		return
+	// oidc_connector: none disables the identity check for this user (TPM binding only).
+	ok = userconf.OIDCConnector == oidc.NoOIDC
+	if !ok {
+		ok, err = oidc.VerifyUserAndJWT(userconf.OIDCConnector, userconf.Email, string(state.Nonce), cr.Jwt)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 	}
 
 	if !ok {

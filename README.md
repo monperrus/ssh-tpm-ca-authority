@@ -87,3 +87,4 @@ SSO values are based off on what sigstore currently supports.
 
 - `https://github.com/login/oauth`
 - `https://accounts.google.com`
+- `none`: no login, the certificate is issued on the TPM binding alone (tests, unattended machines)

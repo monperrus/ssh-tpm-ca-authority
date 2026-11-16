@@ -104,6 +104,9 @@ func getCode(codeCh chan string, errCh chan error) (string, error) {
 	}
 }
 
+// NoOIDC as a user's oidc_connector issues certificates on TPM binding alone, without login.
+const NoOIDC = "none"
+
 func RunOIDCFlow(connector, nonce string) (string, error) {
 	issuer := "https://oauth2.sigstore.dev/auth"
 	provider, err := coreoidc.NewProvider(context.Background(), issuer)

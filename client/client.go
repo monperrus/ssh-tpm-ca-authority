@@ -89,9 +89,12 @@ func (a *AttestClient) GetCASignedKey(rwc transport.TPMCloser, clientkey *keyfil
 		return nil, fmt.Errorf("failed getting secret: %v", err)
 	}
 
-	jwt, err := tpmoidc.RunOIDCFlow(ch.OIDC, string(ch.Nonce))
-	if err != nil {
-		return nil, fmt.Errorf("filed producing jwt: %v", err)
+	var jwt string
+	if ch.OIDC != tpmoidc.NoOIDC {
+		jwt, err = tpmoidc.RunOIDCFlow(ch.OIDC, string(ch.Nonce))
+		if err != nil {
+			return nil, fmt.Errorf("filed producing jwt: %v", err)
+		}
 	}
 
 	b, err = json.Marshal(ChallengeResponse{

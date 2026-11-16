@@ -73,8 +73,9 @@ func TestMain(t *testing.T) {
 					CaFile: &server.UnmarshalTPMkey{ca},
 					Users: []*server.UsersConf{
 						{
-							User: "fox",
-							EK:   fmt.Sprintf("%x", ekHandle.Name.Buffer),
+							User:          "fox",
+							OIDCConnector: "none",
+							EK:            fmt.Sprintf("%x", ekHandle.Name.Buffer),
 						},
 					},
 				},
